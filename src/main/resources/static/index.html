@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EcoConnect</title>
+<style>
+:root{--verde:#1f8a4c;--verde-esc:#146136;--verde-cl:#e7f5ec;--txt:#1d2b24;--cinza:#6b7a72;--borda:#d8e3dc;--bg:#f5f9f6;--erro:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+header{background:var(--verde-esc);color:#fff;padding:0 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{font-size:20px;margin:0;padding:14px 0}
+nav{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+nav button{background:none;border:0;color:#cfe9d9;padding:16px 12px;cursor:pointer;font-size:15px;border-bottom:3px solid transparent}
+nav button.ativo,nav button:hover{color:#fff;border-bottom-color:#7be0a4}
+.user{display:flex;align-items:center;gap:10px;font-size:14px}
+main{max-width:1000px;margin:0 auto;padding:20px}
+h2{margin:6px 0 16px;color:var(--verde-esc)}
+.card{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.grid .card{margin:0}
+.card h3{margin:0 0 4px;font-size:17px}
+.muted{color:var(--cinza);font-size:14px}
+.tag{display:inline-block;background:var(--verde-cl);color:var(--verde-esc);border-radius:999px;padding:2px 10px;font-size:12px;margin:4px 4px 0 0}
+.filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end;margin-bottom:16px}
+label{font-size:13px;color:var(--cinza);display:block;margin-bottom:3px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--borda);border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid #9bd7b4;border-color:var(--verde)}
+.btn{background:var(--verde);color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font:inherit;font-weight:600}
+.btn:hover{background:var(--verde-esc)}
+.btn.sec{background:#fff;color:var(--verde-esc);border:1px solid var(--verde)}
+.btn.sec:hover{background:var(--verde-cl)}
+.btn.perigo{background:#fff;color:var(--erro);border:1px solid var(--erro)}
+.btn.perigo:hover{background:#fdecea}
+.btn.peq{padding:5px 10px;font-size:13px}
+.acoes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.full{grid-column:1/-1}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:flex;align-items:center;gap:6px;background:var(--verde-cl);padding:6px 10px;border-radius:999px;color:var(--txt);margin:0;font-size:14px;cursor:pointer}
+.checks input{width:auto}
+#overlay{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+#overlay.on{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:560px;max-height:92vh;overflow:auto}
+.modal h2{margin-top:0}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--txt);color:#fff;padding:10px 18px;border-radius:10px;display:none;z-index:20;max-width:90vw}
+#toast.erro{background:var(--erro)}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--borda);border-radius:12px;overflow:hidden}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--borda);font-size:14px}
+th{background:var(--verde-cl);color:var(--verde-esc)}
+.vazio{text-align:center;color:var(--cinza);padding:30px}
+.hero{background:linear-gradient(135deg,var(--verde),#4cbf7d);color:#fff;border-radius:14px;padding:22px;margin-bottom:18px}
+.hero h2{color:#fff;margin:0 0 6px}
+.hero p{margin:0;opacity:.95}
+.oculto{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>♻️ EcoConnect</h1>
+  <nav>
+    <button data-aba="pontos" class="ativo">Pontos de coleta</button>
+    <button data-aba="recicladores">Recicladores</button>
+    <button data-aba="usuarios" id="navUsuarios" class="oculto">Usuários</button>
+  </nav>
+  <div class="user" id="areaUser"></div>
+</header>
+
+<main>
+  <section id="aba-pontos">
+    <div class="hero"><h2>Encontre onde descartar seu material</h2><p>Pesquise pontos de coleta por cidade, bairro ou tipo de material.</p></div>
+    <div class="card">
+      <div class="filtros">
+        <div><label>Cidade</label><input id="fCidade" placeholder="Ex: Maringá"></div>
+        <div><label>Bairro</label><input id="fBairro" placeholder="Ex: Centro"></div>
+        <div><label>Material</label><select id="fMaterial"><option value="">Todos</option></select></div>
+        <div style="display:flex;gap:8px"><button class="btn" id="btnBuscar">Buscar</button><button class="btn sec" id="btnLimpar">Limpar</button></div>
+      </div>
+    </div>
+    <div class="acoes" style="margin:0 0 14px"><button class="btn oculto" id="btnNovoPonto">+ Novo ponto de coleta</button></div>
+    <div class="grid" id="listaPontos"></div>
+  </section>
+
+  <section id="aba-recicladores" class="oculto">
+    <h2>Recicladores</h2>
+    <div class="acoes" style="margin:0 0 14px"><button class="btn oculto" id="btnNovoRec">+ Novo reciclador</button></div>
+    <div id="listaRec"></div>
+  </section>
+
+  <section id="aba-usuarios" class="oculto">
+    <h2>Usuários</h2>
+    <div id="listaUsuarios"></div>
+  </section>
+</main>
+
+<div id="overlay"><div class="modal" id="modal"></div></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let usuario = null;
+let materiais = [];
+try { usuario = JSON.parse(localStorage.getItem('eco_usuario')); } catch (e) {}
+
+function toast(msg, erro) {
+  const t = $('#toast'); t.textContent = msg; t.className = erro ? 'erro' : ''; t.style.display = 'block';
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 3500);
+}
+
+async function api(metodo, url, corpo) {
+  const h = {};
+  if (corpo) h['Content-Type'] = 'application/json';
+  if (usuario) h['X-Usuario-Id'] = usuario.id;
+  let r;
+  try { r = await fetch(url, { method: metodo, headers: h, body: corpo ? JSON.stringify(corpo) : undefined }); }
+  catch (e) { throw new Error('Não foi possível falar com o servidor.'); }
+  if (r.status === 204) return null;
+  let dados = null;
+  try { dados = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    const msg = dados ? (dados.erro || Object.values(dados).join(' | ')) : 'Erro ' + r.status;
+    throw new Error(msg);
+  }
+  return dados;
+}
+
+const ehGestor = () => usuario && usuario.tipo !== 'CIDADAO';
+const ehAdmin = () => usuario && usuario.tipo === 'ADMINISTRADOR';
+const rotulo = { CIDADAO: 'Cidadão', RECICLADOR: 'Reciclador', ADMINISTRADOR: 'Administrador' };
+
+function atualizaHeader() {
+  const a = $('#areaUser');
+  a.innerHTML = usuario
+    ? `<span>👤 ${esc(usuario.nome)} <small>(${rotulo[usuario.tipo]})</small></span><button class="btn sec peq" id="btnSair">Sair</button>`
+    : `<button class="btn peq" id="btnEntrar">Entrar / Cadastrar</button>`;
+  if (usuario) $('#btnSair').onclick = sair; else $('#btnEntrar').onclick = abrirLogin;
+  $('#navUsuarios').classList.toggle('oculto', !ehAdmin());
+  $('#btnNovoPonto').classList.toggle('oculto', !ehGestor());
+  $('#btnNovoRec').classList.toggle('oculto', !ehGestor());
+}
+
+function sair() {
+  usuario = null; localStorage.removeItem('eco_usuario');
+  atualizaHeader(); irPara('pontos'); carregarPontos();
+}
+
+function irPara(aba) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('ativo', b.dataset.aba === aba));
+  ['pontos', 'recicladores', 'usuarios'].forEach(x => $('#aba-' + x).classList.toggle('oculto', x !== aba));
+  if (aba === 'recicladores') carregarRec();
+  if (aba === 'usuarios') carregarUsuarios();
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => irPara(b.dataset.aba));
+
+function abrirModal(html) { $('#modal').innerHTML = html; $('#overlay').classList.add('on'); }
+function fecharModal() { $('#overlay').classList.remove('on'); }
+$('#overlay').addEventListener('mousedown', e => { if (e.target.id === 'overlay') fecharModal(); });
+
+/* ---------- Login / cadastro ---------- */
+function abrirLogin() {
+  abrirModal(`
+    <div class="tabs"><button class="btn" id="tLogin">Entrar</button><button class="btn sec" id="tCad">Criar conta</button></div>
+    <form id="formAuth" class="form-grid">
+      <div class="full campoNome oculto"><label>Nome</label><input name="nome"></div>
+      <div class="full"><label>E-mail</label><input name="email" type="email" required></div>
+      <div class="full"><label>Senha</label><input name="senha" type="password" required minlength="1"></div>
+      <div class="full campoNome oculto"><label>Tipo de conta</label>
+        <select name="tipo"><option value="CIDADAO">Cidadão</option><option value="RECICLADOR">Reciclador</option></select></div>
+      <div class="full acoes"><button class="btn" type="submit" id="btnAuth">Entrar</button><button type="button" class="btn sec" onclick="fecharModal()">Cancelar</button></div>
+    </form>`);
+  let cadastro = false;
+  const modo = c => {
+    cadastro = c;
+    document.querySelectorAll('.campoNome').forEach(e => e.classList.toggle('oculto', !c));
+    $('#btnAuth').textContent = c ? 'Criar conta' : 'Entrar';
+    $('#tLogin').className = 'btn' + (c ? ' sec' : ''); $('#tCad').className = 'btn' + (c ? '' : ' sec');
+  };
+  $('#tLogin').onclick = () => modo(false); $('#tCad').onclick = () => modo(true);
+  $('#formAuth').onsubmit = async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    try {
+      if (cadastro) {
+        await api('POST', '/api/usuarios', { nome: f.nome, email: f.email, senha: f.senha, tipo: f.tipo });
+        toast('Conta criada!');
+      }
+      usuario = await api('POST', '/api/login', { email: f.email, senha: f.senha });
+      localStorage.setItem('eco_usuario', JSON.stringify(usuario));
+      fecharModal(); atualizaHeader(); carregarPontos(); toast('Bem-vindo, ' + usuario.nome + '!');
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ---------- Pontos ---------- */
+async function carregarMateriais() {
+  try {
+    materiais = await api('GET', '/api/materiais');
+    $('#fMaterial').innerHTML = '<option value="">Todos</option>' + materiais.map(m => `<option>${esc(m.nome)}</option>`).join('');
+  } catch (e) { toast(e.message, true); }
+}
+
+let pontos = [];
+async function carregarPontos() {
+  const p = new URLSearchParams();
+  if ($('#fCidade').value.trim()) p.set('cidade', $('#fCidade').value.trim());
+  if ($('#fBairro').value.trim()) p.set('bairro', $('#fBairro').value.trim());
+  if ($('#fMaterial').value) p.set('material', $('#fMaterial').value);
+  try {
+    pontos = await api('GET', p.toString() ? '/api/pontos/pesquisa?' + p : '/api/pontos');
+  } catch (e) { toast(e.message, true); return; }
+  const l = $('#listaPontos');
+  if (!pontos.length) { l.innerHTML = '<div class="card vazio" style="grid-column:1/-1">Nenhum ponto de coleta encontrado.</div>'; return; }
+  l.innerHTML = pontos.map(pt => `
+    <div class="card">
+      <h3>${esc(pt.nome)}</h3>
+      <div class="muted">📍 ${esc(pt.endereco.logradouro)}, ${esc(pt.endereco.numero || 's/n')} - ${esc(pt.endereco.bairro || '')}<br>${esc(pt.endereco.cidade)}/${esc(pt.endereco.estado)}</div>
+      <div class="muted">🕒 ${esc(pt.horarioFuncionamento)}</div>
+      <div>${(pt.materiaisAceitos || []).map(m => `<span class="tag">${esc(m.nome)}</span>`).join('')}</div>
+      <div class="acoes">
+        <button class="btn sec peq" onclick="detalhesPonto(${pt.id})">Detalhes</button>
+        ${ehGestor() ? `<button class="btn sec peq" onclick="formPonto(${pt.id})">Editar</button><button class="btn perigo peq" onclick="excluirPonto(${pt.id})">Excluir</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+$('#btnBuscar').onclick = carregarPontos;
+$('#btnLimpar').onclick = () => { ['#fCidade', '#fBairro', '#fMaterial'].forEach(s => $(s).value = ''); carregarPontos(); };
+['#fCidade', '#fBairro'].forEach(s => $(s).addEventListener('keydown', e => { if (e.key === 'Enter') carregarPontos(); }));
+
+async function detalhesPonto(id) {
+  try {
+    const pt = await api('GET', '/api/pontos/' + id);
+    const e = pt.endereco;
+    abrirModal(`<h2>${esc(pt.nome)}</h2>
+      <p>${esc(pt.descricao || '')}</p>
+      <p><b>Endereço:</b> ${esc(e.logradouro)}, ${esc(e.numero || 's/n')} - ${esc(e.bairro || '')}, ${esc(e.cidade)}/${esc(e.estado)} ${e.cep ? '· CEP ' + esc(e.cep) : ''}</p>
+      <p><b>Horário:</b> ${esc(pt.horarioFuncionamento)}</p>
+      <p><b>Materiais aceitos:</b><br>${(pt.materiaisAceitos || []).map(m => `<span class="tag">${esc(m.nome)}</span>`).join('')}</p>
+      <div class="acoes"><a class="btn sec" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.logradouro + ' ' + (e.numero || '') + ', ' + e.cidade + ' ' + e.estado)}">Ver no mapa</a><button class="btn" onclick="fecharModal()">Fechar</button></div>`);
+  } catch (err) { toast(err.message, true); }
+}
+
+function formPonto(id) {
+  const pt = id ? pontos.find(x => x.id === id) : null;
+  const e = pt ? pt.endereco : {};
+  const sel = new Set(pt ? (pt.materiaisAceitos || []).map(m => m.id) : []);
+  abrirModal(`<h2>${pt ? 'Editar' : 'Novo'} ponto de coleta</h2>
+    <form id="formPonto" class="form-grid">
+      <div class="full"><label>Nome *</label><input name="nome" required value="${esc(pt?.nome)}"></div>
+      <div class="full"><label>Descrição</label><textarea name="descricao" rows="2">${esc(pt?.descricao)}</textarea></div>
+      <div class="full"><label>Horário de funcionamento *</label><input name="horario" required placeholder="Seg a Sex, 8h às 17h" value="${esc(pt?.horarioFuncionamento)}"></div>
+      <div class="full"><label>Logradouro *</label><input name="logradouro" required value="${esc(e.logradouro)}"></div>
+      <div><label>Número</label><input name="numero" value="${esc(e.numero)}"></div>
+      <div><label>Bairro</label><input name="bairro" value="${esc(e.bairro)}"></div>
+      <div><label>Cidade *</label><input name="cidade" required value="${esc(e.cidade)}"></div>
+      <div><label>UF *</label><input name="estado" required maxlength="2" value="${esc(e.estado)}"></div>
+      <div><label>CEP</label><input name="cep" maxlength="9" value="${esc(e.cep)}"></div>
+      <div class="full"><label>Materiais aceitos *</label><div class="checks">
+        ${materiais.map(m => `<label><input type="checkbox" name="mat" value="${m.id}" ${sel.has(m.id) ? 'checked' : ''}>${esc(m.nome)}</label>`).join('')}</div></div>
+      <div class="full acoes"><button class="btn" type="submit">Salvar</button><button type="button" class="btn sec" onclick="fecharModal()">Cancelar</button></div>
+    </form>`);
+  $('#formPonto').onsubmit = async ev => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const ids = f.getAll('mat').map(Number);
+    if (!ids.length) { toast('Selecione ao menos um material.', true); return; }
+    const corpo = {
+      nome: f.get('nome'), descricao: f.get('descricao'), horarioFuncionamento: f.get('horario'),
+      endereco: { logradouro: f.get('logradouro'), numero: f.get('numero'), bairro: f.get('bairro'),
+        cidade: f.get('cidade'), estado: f.get('estado').toUpperCase(), cep: f.get('cep') },
+      materiaisIds: ids
+    };
+    try {
+      await api(pt ? 'PUT' : 'POST', '/api/pontos' + (pt ? '/' + pt.id : ''), corpo);
+      fecharModal(); toast('Ponto salvo!'); carregarPontos();
+    } catch (err) { toast(err.message, true); }
+  };
+}
+$('#btnNovoPonto').onclick = () => formPonto();
+
+async function excluirPonto(id) {
+  if (!confirm('Excluir este ponto de coleta?')) return;
+  try { await api('DELETE', '/api/pontos/' + id); toast('Ponto excluído.'); carregarPontos(); }
+  catch (e) { toast(e.message, true); }
+}
+
+/* ---------- Recicladores ---------- */
+let recs = [];
+async function carregarRec() {
+  const l = $('#listaRec');
+  if (!usuario) { l.innerHTML = '<div class="card vazio">Faça login para ver os contatos dos recicladores.<br><br><button class="btn" onclick="abrirLogin()">Entrar</button></div>'; return; }
+  try { recs = await api('GET', '/api/recicladores'); } catch (e) { toast(e.message, true); return; }
+  if (!recs.length) { l.innerHTML = '<div class="card vazio">Nenhum reciclador cadastrado.</div>'; return; }
+  l.innerHTML = '<div class="grid">' + recs.map(r => `
+    <div class="card"><h3>${esc(r.nome)}</h3>
+      <div class="muted">${esc(r.razaoSocial || '')}${r.cnpj ? ' · CNPJ ' + esc(r.cnpj) : ''}</div>
+      <div>📞 ${esc(r.telefone)}</div>
+      ${r.email ? `<div>✉️ ${esc(r.email)}</div>` : ''}
+      ${r.horarioAtendimento ? `<div class="muted">🕒 ${esc(r.horarioAtendimento)}</div>` : ''}
+      ${ehGestor() ? `<div class="acoes"><button class="btn sec peq" onclick="formRec(${r.id})">Editar</button><button class="btn perigo peq" onclick="excluirRec(${r.id})">Excluir</button></div>` : ''}
+    </div>`).join('') + '</div>';
+}
+
+function formRec(id) {
+  const r = id ? recs.find(x => x.id === id) : {};
+  abrirModal(`<h2>${id ? 'Editar' : 'Novo'} reciclador</h2>
+    <form id="formRec" class="form-grid">
+      <div class="full"><label>Nome *</label><input name="nome" required value="${esc(r.nome)}"></div>
+      <div><label>Razão social</label><input name="razaoSocial" value="${esc(r.razaoSocial)}"></div>
+      <div><label>CNPJ</label><input name="cnpj" value="${esc(r.cnpj)}"></div>
+      <div><label>Telefone *</label><input name="telefone" required value="${esc(r.telefone)}"></div>
+      <div><label>E-mail</label><input name="email" type="email" value="${esc(r.email)}"></div>
+      <div class="full"><label>Horário de atendimento</label><input name="horarioAtendimento" value="${esc(r.horarioAtendimento)}"></div>
+      <div class="full acoes"><button class="btn" type="submit">Salvar</button><button type="button" class="btn sec" onclick="fecharModal()">Cancelar</button></div>
+    </form>`);
+  $('#formRec').onsubmit = async ev => {
+    ev.preventDefault();
+    const corpo = Object.fromEntries(new FormData(ev.target));
+    try {
+      await api(id ? 'PUT' : 'POST', '/api/recicladores' + (id ? '/' + id : ''), corpo);
+      fecharModal(); toast('Reciclador salvo!'); carregarRec();
+    } catch (err) { toast(err.message, true); }
+  };
+}
+$('#btnNovoRec').onclick = () => formRec();
+
+async function excluirRec(id) {
+  if (!confirm('Excluir este reciclador?')) return;
+  try { await api('DELETE', '/api/recicladores/' + id); toast('Reciclador excluído.'); carregarRec(); }
+  catch (e) { toast(e.message, true); }
+}
+
+/* ---------- Usuários (admin) ---------- */
+async function carregarUsuarios() {
+  let us;
+  try { us = await api('GET', '/api/usuarios'); } catch (e) { toast(e.message, true); return; }
+  $('#listaUsuarios').innerHTML = `<table><tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Tipo</th><th></th></tr>` +
+    us.map(u => `<tr><td>${u.id}</td><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${rotulo[u.tipo]}</td>
+      <td>${u.id === usuario.id ? '' : `<button class="btn perigo peq" onclick="excluirUsuario(${u.id})">Excluir</button>`}</td></tr>`).join('') + '</table>';
+}
+async function excluirUsuario(id) {
+  if (!confirm('Excluir este usuário?')) return;
+  try { await api('DELETE', '/api/usuarios/' + id); toast('Usuário excluído.'); carregarUsuarios(); }
+  catch (e) { toast(e.message, true); }
+}
+
+atualizaHeader();
+carregarMateriais().then(carregarPontos);
+</script>
+</body>
+</html>
